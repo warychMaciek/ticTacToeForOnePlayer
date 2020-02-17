@@ -93,10 +93,93 @@ function endGame(draw) {
     winningMessageContainer.classList.add('show');
 }
 
+// AI section
+
 function aITurn() {
-    let randomCell;
-    do {
-        randomCell = cellElements[Math.floor(Math.random() * 9)];
-    } while(randomCell.classList.contains(X_CLASS) || randomCell.classList.contains(O_CLASS));
-    randomCell.click();
+        const bestSpot = minimax(checkBoardState(), oTurn).index;
+        cellElements[bestSpot].click();
 }
+
+function checkBoardState() {
+    const boardState = [...cellElements];
+    
+    for(let i = 0; i < boardState.length; i++) {
+        if (boardState[i].classList.contains(X_CLASS)) {
+            boardState[i] = 'x';
+        } else if (boardState[i].classList.contains(O_CLASS)) {
+            boardState[i] = 'o';
+        } else {
+            boardState[i] = 'empty';
+        }
+    }
+    return boardState;
+}
+
+function minimax(boardState, player) {
+    const currentPlayer = player ? O_CLASS : X_CLASS;
+    const emptyCells = [];
+    const checkOWinning = [];
+    const checkXWinning = [];
+
+    for (let i = 0; i < boardState.length; i++) {
+        if (boardState[i] === 'empty') {
+            emptyCells.push(i);
+        } else if (boardState[i] === 'o') {
+            checkOWinning.push(i);
+        } else {
+            checkXWinning.push(i);
+        }
+    }
+    
+    if (checkWinMinimax(checkOWinning)) {
+        return {score: 10};
+    } else if (checkWinMinimax(checkXWinning)) {
+        return {score: -10};
+    } else if (emptyCells.length === 0) {
+        return {score: 0};
+    }
+    
+    const moves = [];
+    for (let i = 0; i < emptyCells.length; i++) {
+        const helpingBoard = [...boardState];
+        let move = {};
+        move.index = emptyCells[i];
+        helpingBoard[emptyCells[i]] = currentPlayer;
+        move.player = currentPlayer;
+        const result = (minimax(helpingBoard, !player));
+        move.score = result.score;  
+        moves.push(move);
+    }
+    
+    let bestMove;
+    if (currentPlayer === O_CLASS) {
+        let bestScore = -1000;
+        for (let i = 0; i < moves.length; i++) {
+            if (moves[i].score > bestScore) {       
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }                            
+    } else {
+        let bestScore = 1000;
+        for (let i = 0; i < moves.length; i++) {
+            if (moves[i].score < bestScore) {
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }
+    }
+    return moves[bestMove];
+}
+
+function checkWinMinimax(markedCells) {
+    return WINNING_COMBINATIONS.some(combination => {
+        return combination.every(element => {
+            return markedCells.includes(element);
+        })
+    })
+}
+
+
+
+
